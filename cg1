@@ -1,0 +1,337 @@
+Practical no:02
+Title:DDA and Bresenham Line drawing algorithm
+
+Name:- Mote Pratiksha Tukaram
+Roll No:- S530
+
+Code:
+#include <GL/glut.h>
+#include <iostream>
+
+int lineType = 1;  // Default to Simple Line
+
+// Function to draw a simple line using DDA algorithm
+void drawSimpleLine() {
+    glBegin(GL_LINES);
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f(0.5f, 0.5f);
+    glEnd();
+}
+
+// Function to draw a dotted line
+void drawDottedLine() {
+    glEnable(GL_LINE_STIPPLE);
+    glLineStipple(1, 0x0101);  // Dotted pattern (1 pixel on, 1 pixel off)
+    glBegin(GL_LINES);
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f(0.5f, 0.5f);
+    glEnd();
+    glDisable(GL_LINE_STIPPLE);
+}
+
+// Function to draw a dashed line
+void drawDashedLine() {
+    glEnable(GL_LINE_STIPPLE);
+    glLineStipple(1, 0x00FF);  // Dashed pattern (short dashes)
+    glBegin(GL_LINES);
+    glVertex2f(-0.5f, -0.5f);
+    glVertex2f(0.5f, 0.5f);
+    glEnd();
+    glDisable(GL_LINE_STIPPLE);
+}
+
+// Function to initialize OpenGL settings
+void initOpenGL() {
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);  // Set background color to black
+    glColor3f(1.0f, 1.0f, 1.0f);           // Set line color to white
+    glLineWidth(2.0f);                      // Set line width
+}
+
+// Display function called by GLUT to render the scene
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);  // Clear the screen
+
+    // Draw the selected line type
+    if (lineType == 1) {
+        drawSimpleLine();
+    } else if (lineType == 2) {
+        drawDottedLine();
+    } else if (lineType == 3) {
+        drawDashedLine();
+    }
+
+    glFlush();  // Flush the OpenGL buffers
+}
+
+// Function to get user input before starting OpenGL
+void getUserChoice() {
+    std::cout << "OpenGL Line Drawing - Choose a line type:" << std::endl;
+    std::cout << "Press 1: Simple Line" << std::endl;
+    std::cout << "Press 2: Dotted Line" << std::endl;
+    std::cout << "Press 3: Dashed Line" << std::endl;
+    std::cout << "Enter your choice: ";
+
+    int choice;
+    std::cin >> choice;
+
+    if (choice >= 1 && choice <= 3) {
+        lineType = choice;
+    } else {
+        std::cout << "Invalid choice. Defaulting to Simple Line." << std::endl;
+        lineType = 1;
+    }
+}
+
+// Main function to set up the window and start the main loop
+int main(int argc, char** argv) {
+    getUserChoice();  // Prompt the user before opening the window
+
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);  // Single buffer and RGB color mode
+    glutInitWindowSize(500, 500);                 // Set window size
+    glutCreateWindow("DDA Line Drawing");         // Create the window
+    initOpenGL();                                 // Initialize OpenGL settings
+    glutDisplayFunc(display);                     // Register display function
+    glutMainLoop();                               // Start the GLUT main loop
+    return 0;
+}
+
+Output:
+
+svpm@svpm-HP-EliteDesk-800-G2-SFF:~$ g++ ddau.cpp -lGL -lGLU -lglut
+svpm@svpm-HP-EliteDesk-800-G2-SFF:~$ ./a.out
+OpenGL Line Drawing - Choose a line type:
+Press 1: Simple Line
+Press 2: Dotted Line
+Press 3: Dashed Line
+Enter your choice: 1  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+svpm@svpm-HP-EliteDesk-800-G2-SFF:~$ g++ ddau.cpp -lGL -lGLU -lglut
+svpm@svpm-HP-EliteDesk-800-G2-SFF:~$ ./a.out
+OpenGL Line Drawing - Choose a line type:
+Press 1: Simple Line
+Press 2: Dotted Line
+Press 3: Dashed Line
+Enter your choice: 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+svpm@svpm-HP-EliteDesk-800-G2-SFF:~$ g++ ddau.cpp -lGL -lGLU -lglut
+svpm@svpm-HP-EliteDesk-800-G2-SFF:~$ ./a.out
+OpenGL Line Drawing - Choose a line type:
+Press 1: Simple Line
+Press 2: Dotted Line
+Press 3: Dashed Line
+Enter your choice: 3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Bresenham Line drawing algorithm
+
+code:
+
+#include <GL/glut.h>
+#include <iostream>
+
+int lineType = 1;  // Default: Simple Line
+
+// Fixed Start and End Points
+const int x1 = 100, y1 = 100, x2 = 400, y2 = 400;  
+
+// Function to draw a pixel at (x, y)
+void drawPixel(int x, int y) {
+    glBegin(GL_POINTS);
+    glVertex2i(x, y);
+    glEnd();
+}
+
+// Bresenham’s Line Algorithm (Different Styles)
+void drawBresenhamLine(int style) {
+    int dx = abs(x2 - x1), dy = abs(y2 - y1);
+    int sx = (x2 >= x1) ? 1 : -1;
+    int sy = (y2 >= y1) ? 1 : -1;
+    int err = dx - dy, e2;
+    
+    int count = 0;
+    int x = x1, y = y1;
+
+    while (true) {
+        switch (style) {
+            case 1:  // Simple Line
+                drawPixel(x, y);
+                break;
+            case 2:  // Dotted Line
+                if (count % 2 == 0) drawPixel(x, y);
+                break;
+            case 3:  // Dashed Line
+                if (count % 10 < 6) drawPixel(x, y);
+                break;
+        }
+
+        if (x == x2 && y == y2) break; // Stop when end point is reached
+
+        e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x += sx; }
+        if (e2 < dx) { err += dx; y += sy; }
+        
+        count++;
+    }
+}
+
+// OpenGL Display Function
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);  
+    drawBresenhamLine(lineType);
+    glFlush();
+}
+
+// OpenGL Initialization
+void initOpenGL() {
+    glClearColor(1, 1, 1, 1); // Black background
+    glColor3f(0, 0, 1);       // White line
+    glPointSize(2);           // Pixel size
+    gluOrtho2D(0, 500, 0, 500); // 2D coordinate system
+}
+
+// Get user choice
+void getUserChoice() {
+    std::cout << "Select Line Type:\n";
+    std::cout << "1. Simple Line\n2. Dotted Line\n3. Dashed Line\n";
+    std::cout << "Enter your choice: ";
+    std::cin >> lineType;
+
+    if (lineType < 1 || lineType > 3) {
+        std::cout << "Invalid choice, defaulting to Simple Line.\n";
+        lineType = 1;
+    }
+}
+
+// Main Function
+int main(int argc, char** argv) {
+    getUserChoice();  // Get user input before creating the window
+
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(500, 500);
+    glutCreateWindow("Bresenham Line Drawing");
+
+    initOpenGL();
+    glutDisplayFunc(display);
+    glutMainLoop();
+    return 0;
+}
+
+
+output
+svpm@svpm-HP-EliteDesk-800-G2-SFF:~$ g++ breshline.cpp -lGL -lGLU -lglut
+svpm@svpm-HP-EliteDesk-800-G2-SFF:~$ ./a.out
+Select Line Type:
+1. Simple Line
+2. Dotted Line
+3. Dashed Line
+Enter your choice: 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+svpm@svpm-HP-EliteDesk-800-G2-SFF:~$ g++ breshline.cpp -lGL -lGLU -lglut
+svpm@svpm-HP-EliteDesk-800-G2-SFF:~$ ./a.out
+Select Line Type:
+1. Simple Line
+2. Dotted Line
+3. Dashed Line
+Enter your choice: 2
+
+
+![Alt Text]("C:\Users\Pratiksha\Desktop\java\pratiksha\src\My project\cgimg1.png")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+svpm@svpm-HP-EliteDesk-800-G2-SFF:~$ g++ breshline.cpp -lGL -lGLU -lglut
+svpm@svpm-HP-EliteDesk-800-G2-SFF:~$ ./a.out
+Select Line Type:
