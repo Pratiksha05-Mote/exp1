@@ -1,0 +1,134 @@
+#include <GL/glut.h>
+#include <iostream>
+#include <unistd.h>
+
+struct Point {
+    GLint x;
+    GLint y;
+};
+
+struct Color {
+    GLfloat r;
+    GLfloat g;
+    GLfloat b;
+};
+
+// Function to draw a line using DDA algorithm
+void draw_dda(Point p1, Point p2) {
+    GLfloat dx = p2.x - p1.x;
+    GLfloat dy = p2.y - p1.y;
+    GLfloat step = (abs(dx) > abs(dy)) ? abs(dx) : abs(dy);
+    GLfloat xInc = dx / step;
+    GLfloat yInc = dy / step;
+    GLfloat x = p1.x, y = p1.y;
+    for (float i = 0; i <= step; i++) {
+        glVertex2i(x, y);
+        x += xInc;
+        y += yInc;
+    }
+}
+
+// Initialization of OpenGL settings
+void init() {
+    glClearColor(1.0, 1.0, 1.0, 0.0);
+    glPointSize(1.0);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0, 640, 0, 480);
+}
+
+// Function to get the color of a pixel
+Color getPixelColor(GLint x, GLint y) {
+    Color color;
+    glReadPixels(x, y, 1, 1, GL_RGB, GL_FLOAT, &color);
+    return color;
+}
+
+// Function to set the color of a pixel
+void setPixelColor(GLint x, GLint y, Color color) {
+    glColor3f(color.r, color.g, color.b);
+    glBegin(GL_POINTS);
+        glVertex2i(x, y);
+    glEnd();
+    glFlush();
+}
+
+// Boundary fill algorithm with two boundary colors
+void boundaryFill(GLint x, GLint y, Color fillColor, Color boundaryColor1, Color boundaryColor2) {
+    Color color = getPixelColor(x, y);
+
+    // Check if the pixel color is neither of the boundary colors
+    if ((color.r != boundaryColor1.r || color.g != boundaryColor1.g || color.b != boundaryColor1.b) &&
+        (color.r != boundaryColor2.r || color.g != boundaryColor2.g || color.b != boundaryColor2.b)) {
+
+        // If it's not the same as the fill color, fill it
+        if (color.r != fillColor.r || color.g != fillColor.g || color.b != fillColor.b) {
+            setPixelColor(x, y, fillColor);
+            usleep(7000);
+
+            // Recursive calls for 4-connectivity
+            boundaryFill(x, y - 1, fillColor, boundaryColor1, boundaryColor2); // Top
+            boundaryFill(x, y + 1, fillColor, boundaryColor1, boundaryColor2); // Bottom
+            boundaryFill(x - 1, y, fillColor, boundaryColor1, boundaryColor2); // Left
+            boundaryFill(x + 1, y, fillColor, boundaryColor1, boundaryColor2); // Right
+        }
+    }
+}
+
+// Mouse click handler to initiate the boundary fill
+void onMouseClick(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+        Color fillColor = {0.0f, 1.0f, 0.0f}; // Green
+        Color boundaryColor1 = {1.0f, 0.0f, 0.0f}; // Red
+        Color boundaryColor2 = {0.0f, 0.0f, 1.0f}; // Blue
+        
+        boundaryFill(x, 480 - y, fillColor, boundaryColor1, boundaryColor2);
+    }
+}
+
+// Display function to draw the polygon with two boundary colors
+void display(void) {
+    Point p1 = {150, 150}, p2 = {150, 300}, p3 = {300, 300}, p4 = {300, 150};
+
+
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Draw the first boundary (blue)
+    glColor3f(1.0f, 0.0f, 0.0f); // Blue boundary
+    glBegin(GL_POINTS);
+        draw_dda(p1, p2);
+        draw_dda(p2, p3);
+        draw_dda(p3, p4);
+        draw_dda(p4, p1);
+        
+        
+    glEnd();
+
+    // Draw the second boundary (red)
+    glColor3f(0.0f, 0.0f, 1.0f); // Red boundary
+    glBegin(GL_POINTS);
+        draw_dda(p1, p2);
+        
+        draw_dda(p3, p4);
+        
+        
+        
+    glEnd();
+
+    glFlush();
+}
+
+// Main function to set up GLUT and OpenGL context
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(640, 480);
+    glutInitWindowPosition(200, 200);
+    glutCreateWindow("OpenGL Boundary Fill with Two Boundary Colors");
+    init();
+    glutDisplayFunc(display);
+    glutMouseFunc(onMouseClick);
+    glutMainLoop();
+    return 0;
+}
+
