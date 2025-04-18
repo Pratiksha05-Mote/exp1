@@ -1,0 +1,143 @@
+#include <GL/glut.h>
+#include <math.h>
+
+double parr[8];
+bool showPolygon = false;  // A flag to control whether to show the polygon
+
+void init() {
+    glClearColor(0, 0, 0, 1);
+    gluOrtho2D(-600, 600, -600, 600);  // Increased the visible range
+
+    // Polygon Default (Rectangle)
+    parr[0] = 100;  // x1
+    parr[1] = 100;  // y1
+    parr[2] = 300; // x2
+    parr[3] = 100;
+    parr[4] = 300; // x3
+    parr[5] = 300;
+    parr[6] = 100;  // x4
+    parr[7] = 300;
+}
+
+void polygon() {
+    glColor3f(0, 1, 0);  // Set polygon color to green
+    glBegin(GL_LINE_LOOP);
+        glVertex2f(parr[0], parr[1]);
+        glVertex2f(parr[2], parr[3]);
+        glVertex2f(parr[4], parr[5]);
+        glVertex2f(parr[6], parr[7]);
+    glEnd();
+    glFlush();  // Ensure rendering is done
+}
+
+void drawCoordinates() {
+    glClear(GL_COLOR_BUFFER_BIT);  // Clear the screen
+
+    glColor3f(1, 1, 1);  // Set axis color to white
+    glBegin(GL_LINES);
+        glVertex2f(-600, 0); glVertex2f(600, 0);  // X-axis
+        glVertex2f(0, 600); glVertex2f(0, -600);  // Y-axis
+    glEnd();
+
+    // Draw the polygon only if showPolygon is true
+    if (showPolygon) {
+        polygon();  // Draw the polygon when the flag is true
+    }
+    
+    glFlush();   // Render the axes and polygon to screen
+}
+
+// Reflection across the X-axis
+void reflectionX() {
+    for (int i = 1; i < 8; i += 2) {
+        parr[i] = -parr[i];  // Reflect Y-coordinate
+    }
+    glutPostRedisplay();  // Request a redraw
+}
+
+// Reflection across the Y-axis
+void reflectionY() {
+    for (int i = 0; i < 8; i += 2) {
+        parr[i] = -parr[i];  // Reflect X-coordinate
+    }
+    glutPostRedisplay();  // Request a redraw
+}
+
+// Translation
+void translate2d() {
+    int x = 100, y = 100;
+    for (int i = 0; i < 8; i += 2) {
+        parr[i] = parr[i] + x;    // Translate X
+        parr[i + 1] = parr[i + 1] + y;  // Translate Y
+    }
+    glutPostRedisplay();  // Request a redraw
+}
+
+// Rotation about an arbitrary point (cx, cy)
+void rotation() {
+    double angle = 45, rad, x, y;
+    double cx = 100, cy = 100;  // The arbitrary point (center of rotation)
+    
+    rad = 3.141 * (angle / 180);  // Convert angle to radians
+
+    // Apply the rotation for each vertex
+    for (int i = 0; i < 8; i += 2) {
+        // Step 1: Translate the point so that (cx, cy) becomes the origin
+        x = parr[i] - cx;
+        y = parr[i + 1] - cy;
+
+        // Step 2: Apply the rotation around the origin (0, 0)
+        double newX = x * cos(rad) - y * sin(rad);
+        double newY = x * sin(rad) + y * cos(rad);
+
+        // Step 3: Translate back by adding (cx, cy)
+        parr[i] = newX + cx;
+        parr[i + 1] = newY + cy;
+    }
+    glutPostRedisplay();  // Request a redraw
+}
+
+// Scaling
+void scaling2d() {
+    double x = 0.5, y = 0.5;  // Scaling factors
+    for (int i = 0; i < 8; i += 2) {
+        parr[i] = parr[i] * x;      // Scale X-coordinate
+        parr[i + 1] = parr[i + 1] * y;  // Scale Y-coordinate
+    }
+    glutPostRedisplay();  // Request a redraw
+}
+
+void menu(int ch) {
+    switch(ch) {
+        case 1: 
+            showPolygon = true;  // Set flag to true to display polygon
+            glutPostRedisplay();  // Request a redraw
+            break;
+        case 2: translate2d(); break;
+        case 3: scaling2d(); break;
+        case 4: rotation(); break;
+        case 5: reflectionX(); break;  // Reflection option (X-axis only)
+        case 6: reflectionY(); break;  // Reflection option (Y-axis only)
+    }
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitWindowSize(500, 500);
+    glutCreateWindow("2D Transformation");
+    init();
+    glutDisplayFunc(drawCoordinates);
+    
+    glutCreateMenu(menu);
+    glutAddMenuEntry("1 Display Polygon", 1);
+    glutAddMenuEntry("2 Translate", 2);
+    glutAddMenuEntry("3 Scaling", 3);
+    glutAddMenuEntry("4 Rotation", 4);
+    glutAddMenuEntry("5 Reflection Across X-axis", 5);  // Reflection option for X-axis only
+    glutAddMenuEntry("6 Reflection Across Y-axis", 6);  // Reflection option for Y-axis
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
+    
+    glutMainLoop();
+    return 0;
+}
+
