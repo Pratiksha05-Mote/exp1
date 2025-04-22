@@ -1,0 +1,102 @@
+#ifdef __APPLE_CC__
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
+
+#include <cstdlib>
+#include <ctime>
+
+const int NUM_FISH = 20;
+
+GLfloat fishX[NUM_FISH];     // X positions of fish
+GLfloat fishY[NUM_FISH];     // Y positions of fish
+GLfloat fishSpeed[NUM_FISH]; // Speed of each fish
+
+// Fish bitmap (32x11, although visually 27x11)
+GLubyte fish[] = {
+  0x00, 0x60, 0x01, 0x00,
+  0x00, 0x90, 0x01, 0x00,
+  0x03, 0xf8, 0x02, 0x80,
+  0x1c, 0x37, 0xe4, 0x40,
+  0x20, 0x40, 0x90, 0x40,
+  0xc0, 0x40, 0x78, 0x80,
+  0x41, 0x37, 0x84, 0x80,
+  0x1c, 0x1a, 0x04, 0x80,
+  0x03, 0xe2, 0x02, 0x40,
+  0x00, 0x11, 0x01, 0x40,
+  0x00, 0x0f, 0x00, 0xe0,
+};
+
+// Generate a random float between 0.0 and 1.0
+GLfloat randomFloat() {
+  return (GLfloat)rand() / RAND_MAX;
+}
+
+// Initialize fish positions and speeds
+void initFish() {
+  for (int i = 0; i < NUM_FISH; i++) {
+    fishX[i] = randomFloat();           // Random X position
+    fishY[i] = randomFloat();           // Random Y position
+    fishSpeed[i] = 0.002f + randomFloat() * 0.003f;  // Random speed
+  }
+}
+
+// Update fish positions, moving from right to left
+void updateFish(int value) {
+  for (int i = 0; i < NUM_FISH; i++) {
+    fishX[i] -= fishSpeed[i]; // Move left by decreasing X position
+
+    if (fishX[i] < -0.2f) {  // If fish goes off the left side of the screen
+      fishX[i] = 1.2f;        // Wrap around to the right side
+      fishY[i] = randomFloat(); // Randomize Y position when it wraps
+    }
+  }
+
+  glutPostRedisplay();              // Trigger redraw
+  glutTimerFunc(16, updateFish, 0); // Call this function again in ~16ms (~60fps)
+}
+
+// Window reshape function
+void reshape(int width, int height) {
+  glViewport(0, 0, width, height);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluOrtho2D(0, 1, 0, 1);
+}
+
+// Display all fish and add water background
+void display() {
+  glClear(GL_COLOR_BUFFER_BIT);
+  
+  // Set the background color to represent water (blue)
+  glClearColor(0.0f, 0.0f, 1.0f, 1.0f); // Blue water background
+  
+  for (int i = 0; i < NUM_FISH; i++) {
+    glColor3f(randomFloat(), randomFloat(), randomFloat()); // Random color for each fish
+    glRasterPos3f(fishX[i], fishY[i], 0.0f);  // Set position for each fish
+    glBitmap(27, 11, 0, 0, 0, 0, fish);  // Draw fish bitmap
+  }
+  glFlush();
+}
+
+// Main function
+int main(int argc, char **argv) {
+  srand(static_cast<unsigned>(time(0))); // Seed the random number generator
+
+  glutInit(&argc, argv);
+  glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
+  glutInitWindowSize(600, 400);    // Set window size
+  glutCreateWindow("Animated Fishies");
+
+  glutReshapeFunc(reshape);         // Set reshape callback
+  glutDisplayFunc(display);         // Set display callback
+
+  initFish();                       // Initialize fish positions and speeds
+  glutTimerFunc(0, updateFish, 0);  // Start animation
+
+  glutMainLoop();                   // Start the main loop
+  return 0;
+}
+
+
